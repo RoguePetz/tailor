@@ -5,13 +5,52 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const AddModal = ({ isOpen, onClose, fetchCustomers }) => {
   const storage = getStorage();
+  const defaultMeasurements = [
+    "Shoulder circ",
+    "Upper bust circ",
+    "Bust circ",
+    "Under Bust circ",
+    "Waist circ",
+    "Upper hip circ",
+    "Hip circ",
+    "Thigh circ",
+    "Knee circ",
+    "Calf circ",
+    "Ankle circ",
+    "Armscye ",
+    "Bicep circ",
+    "Elbow circ",
+    "Wrist circ",
+    "Across Shoulder ",
+    "Across Back",
+    "Across Chest",
+    "Bust Span",
+    "Soulder - Bust Point",
+    "Shoulder - Under bust ",
+    "Shoulder - waistline",
+    "Waistline - Hip line ",
+    "Waistline - knee line",
+    "Waistline - floor",
+    "Shoulder - floor (full length) ",
+    "Back half length ",
+    "Front half length ",
+    "Sleeve length ",
+    "Inseam",
+    "Body rise / Crotch depth",
+    "Desired Top length ",
+    "Pant length ",
+    "Skirt length ",
+    "Shoulder to Elbow ",
+    "Head circ",
+    "Neck cir"
+  ];
 
   const [customerDetails, setCustomerDetails] = useState({
     customerName: '',
     contactNumber: '',
     notes: ''
   });
-  const [measurements, setMeasurements] = useState([]);
+  const [measurements, setMeasurements] = useState(defaultMeasurements.map((part) => ({ part, value: "" })));
   const [activeTab, setActiveTab] = useState('details');
   const [profileImage, setProfileImage] = useState(null);
   const [profilePreview, setProfilePreview] = useState('');
