@@ -9,12 +9,64 @@ const UpdateModal = ({
   fetchCustomers, 
   customerToEdit 
 }) => {
+
+  const defaultTopMeasurements = [
+    "Head circ",
+    "Neck cir",
+    "Shoulder circ",
+    "Upper bust circ",
+    "Bust circ",
+    "Under Bust circ",
+    "Bust Span",
+    "Armscye ",
+    "Sleeve length ",
+    "Bicep circ",
+    "Elbow circ",
+    "Wrist circ",
+    "Across Shoulder ",
+    "Across Back",
+    "Across Chest",
+    "Shoulder - Bust Point",
+    "Shoulder - Under bust ",
+    "Shoulder - waistline",
+    "Shoulder - Elbow ",
+    "Back half length ",
+    "Front half length ",
+    "Waist circ",
+    "Desired Top length ",
+  ];
+  const defaultBottomMeasurements = [
+    "Waistline - Hip line ",
+    "Waistline - knee line",
+    "Waistline - floor",
+    "Shoulder - floor (full length) ",
+    "Shoulder - hip",
+    "Shoulder - knee",
+    "Upper hip circ",
+    "Hip circ",
+    "Thigh circ",
+    "Knee circ",
+    "Calf circ",
+    "Ankle circ",
+    "Inseam",
+    "Body rise / Crotch depth",
+    "Pant length ",
+    "Skirt length ",
+  ];
+
   const [customerDetails, setCustomerDetails] = useState({
     customerName: '',
     contactNumber: '',
     notes: ''
   });
-  const [measurements, setMeasurements] = useState([]);
+
+  const [topMeasurements, setTopMeasurements] = useState([]);
+  const [bottomMeasurements, setBottomMeasurements] = useState([]);
+
+  // State to track collapsibility
+  const [showTop, setShowTop] = useState(false);
+  const [showBottom, setShowBottom] = useState(false);
+
   const [activeTab, setActiveTab] = useState('details');
   const [profileImage, setProfileImage] = useState(null);
   const [profilePreview, setProfilePreview] = useState('');
@@ -28,6 +80,7 @@ const UpdateModal = ({
 
   // Populate form with existing customer data when modal opens
   useEffect(() => {
+    console.log("Loading existing data...")
     if (customerToEdit) {
       setCustomerDetails({
         customerName: customerToEdit.customerName,
@@ -35,7 +88,28 @@ const UpdateModal = ({
         notes: customerToEdit.notes || ''
       });
 
-      setMeasurements(customerToEdit.measurements || []);
+      const top = customerToEdit.measurements.filter(m => defaultTopMeasurements.includes(m.part));
+      const bottom = customerToEdit.measurements.filter(m => defaultBottomMeasurements.includes(m.part));
+
+      // Find the index of the first bottom measurement in allMeasurements
+      const firstBottomIndex = customerToEdit.measurements.findIndex(m => defaultBottomMeasurements.includes(m.part));
+
+      // Handle cases where no bottom measurements exist in the list
+      const bottomStartIndex = firstBottomIndex === -1 ? customerToEdit.measurements.length : firstBottomIndex;
+
+      // Get extra measurements
+      const extraMeasurements = customerToEdit.measurements.filter(m => 
+        !defaultTopMeasurements.includes(m.part) && !defaultBottomMeasurements.includes(m.part)
+      );
+
+      // Categorize extra measurements based on their position
+      const extraTop = extraMeasurements.filter(m => customerToEdit.measurements.indexOf(m) < bottomStartIndex);
+      const extraBottom = extraMeasurements.filter(m => customerToEdit.measurements.indexOf(m) >= bottomStartIndex);
+      top.push(...extraTop);
+      bottom.push(...extraBottom);
+      
+      setTopMeasurements(top || []);
+      setBottomMeasurements(bottom || []);
       setExistingProfileUrl(customerToEdit.profileImageUrl || '');
       setExistingAdditionalUrls(customerToEdit.additionalImageUrls || []);
     }
@@ -46,20 +120,37 @@ const UpdateModal = ({
     setCustomerDetails(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddMeasurement = () => {
-    setMeasurements(prev => [...prev, { part: '', value: '' }]);
+
+  const handleAddMeasurement = (section) => {
+    if (section === "top") {
+      setTopMeasurements(prev => [...prev, { part: "", value: "" }]); 
+    } else if (section === "bottom") {
+      setBottomMeasurements(prev => [...prev, { part: "", value: "" }]); 
+    }
   };
 
-  const handleMeasurementChange = (index, field, value) => {
-    const newMeasurements = [...measurements];
-    newMeasurements[index][field] = value;
-    setMeasurements(newMeasurements);
+  const handleMeasurementChange = (index, key, value, section) => {
+    if (section === "top") {
+      setTopMeasurements(prev => {
+        const newMeasurements = [...prev];
+        newMeasurements[index][key] = value;
+        return newMeasurements;
+      });
+    } else if (section === "bottom") {
+      setBottomMeasurements(prev => {
+        const newMeasurements = [...prev];
+        newMeasurements[index][key] = value;
+        return newMeasurements;
+      });
+    }
   };
 
-  const handleRemoveMeasurement = (index) => {
-    const newMeasurements = [...measurements];
-    newMeasurements.splice(index, 1);
-    setMeasurements(newMeasurements);
+  const handleRemoveMeasurement = (index, section) => {
+    if (section === "top") {
+      setTopMeasurements((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      setBottomMeasurements((prev) => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleProfileImageChange = (e) => {
@@ -162,6 +253,8 @@ const UpdateModal = ({
         additionalImageUrls.push(url);
       }
 
+      const measurements = [...topMeasurements, ...bottomMeasurements];
+
       const customerData = {
         ...customerDetails,
         measurements,
@@ -223,23 +316,25 @@ const UpdateModal = ({
           <form onSubmit={handleSubmit}>
             {activeTab === 'measurements' ? (
               <div className="measurements-container">
-                <button 
-                  type="button" 
-                  className="add-measurement-btn"
-                  onClick={handleAddMeasurement}
-                >
-                  + Add Measurement
-                </button>
-                
-                {measurements.map((measurement, index) => (
+
+              {/* Top Measurements Section */}
+              <div 
+              className={`section-header ${showTop ? "expanded" : ""}`} 
+              onClick={() => setShowTop(!showTop)}
+              >
+              Top Measurements <span className="arrow">{showTop ? "▼" : "▶"}</span>
+              </div>
+              {showTop && (
+                <div className="measurement-list">
+                {topMeasurements.map((measurement, index) => (
                   <div key={index} className="measurement-row">
                     <div className="input-group">
-                      <input
-                        type="text"
+                      <input 
+                        type="text" 
                         placeholder="Body part (e.g. Chest)"
-                        value={measurement.part}
-                        onChange={(e) => handleMeasurementChange(index, 'part', e.target.value)}
-                        required
+                        value={measurement.part || ""} 
+                        onChange={(e) => handleMeasurementChange(index, 'part', e.target.value, "top")}
+                        required 
                       />
                     </div>
                     <div className="input-group">
@@ -247,24 +342,82 @@ const UpdateModal = ({
                         <input
                           type="number"
                           placeholder="Value"
-                          value={measurement.value}
-                          onChange={(e) => handleMeasurementChange(index, 'value', e.target.value)}
+                          value={measurement.value || ""}
+                          onChange={(e) => handleMeasurementChange(index, "value", e.target.value, "top")}
                           min="0"
                           step="0.25"
                           required
                         />
-                        <span className="unit">in</span>
+                      <span className="unit">in</span>
                       </div>
                     </div>
-                    <button 
-                      type="button"
-                      className="remove-measurement-btn"
-                      onClick={() => handleRemoveMeasurement(index)}
-                    >
-                      ×
+                    <button type="button" className="remove-measurement-btn" onClick={() => handleRemoveMeasurement(index, "top")}>
+                    ×
                     </button>
                   </div>
                 ))}
+                </div>
+              )}
+
+              {/* Bottom Measurements Section */}
+              <div 
+              className={`section-header ${showBottom ? "expanded" : ""}`} 
+              onClick={() => setShowBottom(!showBottom)}
+              >
+              Bottom Measurements <span className="arrow">{showBottom ? "▼" : "▶"}</span>
+              </div>
+              {showBottom && (
+                <div className="measurement-list">
+                {bottomMeasurements.map((measurement, index) => (
+                  <div key={index} className="measurement-row">
+                    <div className="input-group">
+                      <input 
+                        type="text" 
+                        placeholder="Body part (e.g. Legs)"
+                        value={measurement.part || ""} 
+                        onChange={(e) => handleMeasurementChange(index, "part", e.target.value, "bottom")}
+                        required 
+                      />
+                    </div>
+                    <div className="input-group">
+                      <div className="input-wrapper">
+                        <input
+                          type="number"
+                          placeholder="Value"
+                          value={measurement.value || ""}
+                          onChange={(e) => handleMeasurementChange(index, "value", e.target.value, "bottom")}
+                          min="0"
+                          step="0.25"
+                          required
+                        />
+                      <span className="unit">in</span>
+                      </div>
+                    </div>
+                    <button type="button" className="remove-measurement-btn" onClick={() => handleRemoveMeasurement(index, "bottom")}>
+                    ×
+                    </button>
+                  </div>
+                ))}
+
+                </div>
+              )}
+
+                  <div>
+                    <button 
+                      type="button" 
+                      className="add-measurement-btn"
+                      onClick={() => handleAddMeasurement("top")}
+                    >
+                      + Add Top Measurement
+                    </button>
+                    <button 
+                      type="button" 
+                      className="add-measurement-btn"
+                      onClick={() => handleAddMeasurement("bottom")}
+                    >
+                      + Add Bottom Measurement
+                    </button>
+                  </div>
               </div>
             ) : (
               <div className="client-details">
