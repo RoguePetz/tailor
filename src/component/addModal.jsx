@@ -5,44 +5,52 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const AddModal = ({ isOpen, onClose, fetchCustomers }) => {
   const storage = getStorage();
-  const defaultMeasurements = [
+  const topMeasurements = [
+    "Head circ",
+    "Neck cir",
     "Shoulder circ",
     "Upper bust circ",
     "Bust circ",
     "Under Bust circ",
-    "Waist circ",
-    "Upper hip circ",
-    "Hip circ",
-    "Thigh circ",
-    "Knee circ",
-    "Calf circ",
-    "Ankle circ",
+    "Bust Span",
     "Armscye ",
+    "Sleeve length ",
     "Bicep circ",
     "Elbow circ",
     "Wrist circ",
     "Across Shoulder ",
     "Across Back",
     "Across Chest",
-    "Bust Span",
-    "Soulder - Bust Point",
+    "Shoulder - Bust Point",
     "Shoulder - Under bust ",
     "Shoulder - waistline",
+    "Shoulder - Elbow ",
+    "Back half length ",
+    "Front half length ",
+    "Waist circ",
+    "Desired Top length ",
+  ];
+  const bottomMeasurements = [
     "Waistline - Hip line ",
     "Waistline - knee line",
     "Waistline - floor",
     "Shoulder - floor (full length) ",
-    "Back half length ",
-    "Front half length ",
-    "Sleeve length ",
+    "Shoulder - hip",
+    "Shoulder - knee",
+    "Upper hip circ",
+    "Hip circ",
+    "Thigh circ",
+    "Knee circ",
+    "Calf circ",
+    "Ankle circ",
     "Inseam",
     "Body rise / Crotch depth",
-    "Desired Top length ",
     "Pant length ",
     "Skirt length ",
-    "Shoulder to Elbow ",
-    "Head circ",
-    "Neck cir"
+  ];
+  const defaultMeasurements = [
+    ...topMeasurements,
+    ...bottomMeasurements
   ];
 
   const [customerDetails, setCustomerDetails] = useState({
